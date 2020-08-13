@@ -1,6 +1,8 @@
 
 // CAMPAING API INTERFACE // interface.js
 
+import { useEffect } from "react";
+
 function mapDataHelper(data) {
     return { ...data, newAttr: Math.random() }
 }
@@ -40,16 +42,18 @@ export function useRequest() {
     const [status, setStatus] = useState(undefined)
     const [data, setData] = useState(undefined)
     const [error, setError] = useState(undefined)
-    const { openAuthModal } = useAdmin()
+    const { openAuthModal, userToken } = useAdmin()
     const cancelToken = useRef()
+    const lastRequestConfig = useRef()
 
-    function cancelRequest() {
+    function cancelRequest(message = 'operation canceled by the user') {
         if (cancelToken.current) {
-            cancelToken.current.cancel(`operation canceled by the user`)
+            cancelToken.current.cancel(message)
         }
     }
 
     async function request({ config, interceptors }) {
+        lastRequestConfig.current = { config, interceptors }
         cancelToken.current = Axios.CancelToken.source()
         const axiosInstance = Axios.create({ cancelToken })
         axiosInstance.interceptors.request.use(...interceptors.request)
@@ -84,10 +88,16 @@ export function useRequest() {
     useEffect(() => {
         return function cleanup() {
             if (cancelToken.current) {
-                cancelRequest()
+                cancelRequest('component dismount')
             }
         }
     }, [])
+
+    useEffect(() => {
+        if (userToken && error.response.status === 401) {
+            request(lastRequestConfig.current)
+        }
+    }, [userToken])
 
     return { request, status, data, error, cancelRequest }
 }
