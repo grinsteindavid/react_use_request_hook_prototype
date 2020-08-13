@@ -1,7 +1,8 @@
 
 // CAMPAING API INTERFACE // interface.js
 
-import { useEffect } from "react";
+import _ from "lodash";
+
 
 function mapDataHelper(data) {
     return { ...data, newAttr: Math.random() }
@@ -94,7 +95,10 @@ export function useRequest() {
     }, [])
 
     useEffect(() => {
-        if (userToken && error.response.status === 401) {
+        const errorStatus = error.response.status
+        const requestMethod = lastRequestConfig.current.config.method
+
+        if (userToken && errorStatus === 401 && requestMethod.toUpperCase() === "GET") {
             request(lastRequestConfig.current)
         }
     }, [userToken])
