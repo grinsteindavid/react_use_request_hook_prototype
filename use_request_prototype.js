@@ -10,20 +10,18 @@ export function updateCampaign(campaign) {
         config: {
             method: 'POST',
             baseURL: `${BASE_URL}/campaigns/${campaign._id}`,
-            params: { 'token': TOKEN },
             timeout: 10000,
-            headers: { 'Authorization': `Bearer ${Store.get('token')}` },
             data: JSON.stringify(campaign)
         },
         interceptors: {
-            request: (function (request) {
+            request: [function (request) {
                 // Do something before request is sent
                 return request;
             }, function (error) {
                 // Do something with request error
                 return Promise.reject(error);
-            }),
-            response: (function (response) {
+            }],
+            response: [function (response) {
                 // Any status code that lie within the range of 2xx cause this function to trigger
                 // Do something with response data
                 return mapDataHelper(response.data);
@@ -31,7 +29,7 @@ export function updateCampaign(campaign) {
                 // Any status codes that falls outside the range of 2xx cause this function to trigger
                 // Do something with response error
                 return Promise.reject(error);
-            })
+            }]
         }
     }
 }
@@ -55,13 +53,17 @@ export function useRequest() {
     async function request({ config, interceptors }) {
         cancelToken.current = Axios.CancelToken.source()
         const axiosInstance = Axios.create({ cancelToken })
-        axiosInstance.interceptors.request.use(interceptors.request)
-        axiosInstance.interceptors.response.use(interceptors.response)
+        axiosInstance.interceptors.request.use(...interceptors.request)
+        axiosInstance.interceptors.response.use(...interceptors.response)
 
         setError(undefined)
         setStatus('loading')
         try {
-            const response = await axiosInstance.request(config)
+            const response = await axiosInstance.request({
+                ...config,
+                params: { 'token': TOKEN },
+                headers: { 'Authorization': `Bearer ${Store.get('token')}` }
+            })
             setData(response.data)
             setStatus('finished')
         } catch (error) {
