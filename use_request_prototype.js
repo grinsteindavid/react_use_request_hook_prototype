@@ -10,7 +10,6 @@ export function updateCampaign(campaign) {
         config: {
             method: 'POST',
             baseURL: `${BASE_URL}/campaigns/${campaign._id}`,
-            timeout: 10000,
             data: JSON.stringify(campaign)
         },
         interceptors: {
@@ -60,9 +59,10 @@ export function useRequest() {
         setStatus('loading')
         try {
             const response = await axiosInstance.request({
+                timeout: 10000,
                 ...config,
-                params: { 'token': TOKEN },
-                headers: { 'Authorization': `Bearer ${Store.get('token')}` }
+                params: { ...config.params, 'token': TOKEN },
+                headers: { ...config.headers, 'Authorization': `Bearer ${Store.get('token')}` }
             })
             setData(response.data)
             setStatus('finished')
