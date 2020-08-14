@@ -1,8 +1,6 @@
 
 // CAMPAING API INTERFACE // interface.js
 
-import _ from "lodash";
-
 
 function mapDataHelper(data) {
     return { ...data, newAttr: Math.random() }
@@ -46,6 +44,7 @@ export function useRequest() {
     const { openAuthModal, userToken } = useAdmin()
     const cancelToken = useRef()
     const lastRequestConfig = useRef()
+    const retriesLimit = useRef(0)
 
     function cancelRequest(message = 'operation canceled by the user') {
         if (cancelToken.current) {
@@ -71,6 +70,7 @@ export function useRequest() {
             })
             setData(response.data)
             setStatus('finished')
+            retriesLimit.current = 0
         } catch (error) {
             console.error(error)
             if (axiosInstance.isCancel(error)) {
@@ -88,9 +88,7 @@ export function useRequest() {
 
     useEffect(() => {
         return function cleanup() {
-            if (cancelToken.current) {
-                cancelRequest('component dismount')
-            }
+            cancelRequest('component dismount')
         }
     }, [])
 
@@ -98,7 +96,8 @@ export function useRequest() {
         const errorStatus = error.response.status
         const requestMethod = lastRequestConfig.current.config.method
 
-        if (userToken && errorStatus === 401 && requestMethod.toUpperCase() === "GET") {
+        if (userToken && errorStatus === 401 && requestMethod.toUpperCase() === "GET" && retriesLimit.current === 0) {
+            retriesLimit.current += 1
             request(lastRequestConfig.current)
         }
     }, [userToken])
@@ -126,7 +125,7 @@ export function CampaignForm(props) {
                 <button type="submit" />
             </form>
         )
-    }, [campaing, campaignStatus])
+    }, [campaign, campaignStatus])
 }
 
 
