@@ -1,5 +1,8 @@
 // CAMPAIGN HELPER // helper.js
 
+import { useCallback } from "react";
+import { async } from "q";
+
 export function mapDataHelper(data) {
     return { ...data, newAttr: Math.random() }
 }
@@ -47,13 +50,13 @@ export function useRequest() {
     const lastRequestConfig = useRef()
     const retriesLimit = useRef(0)
 
-    function cancelRequest(message = 'operation canceled by the user') {
+    const cancelRequest = useCallback((message = 'operation canceled by the user') => {
         if (cancelToken.current) {
             cancelToken.current.cancel(message)
         }
-    }
+    }, [])
 
-    async function request({ config, interceptors }) {
+    const request = useCallback(async ({ config, interceptors }) => {
         lastRequestConfig.current = { config, interceptors }
         cancelToken.current = Axios.CancelToken.source()
         const axiosInstance = Axios.create({ cancelToken })
@@ -85,10 +88,10 @@ export function useRequest() {
             }
             setError(error)
         }
-    }
+    }, [])
 
     useEffect(() => {
-        return function cleanup() {
+        return () => {
             cancelRequest('component dismount')
         }
     }, [])
@@ -112,11 +115,11 @@ export function CampaignForm(props) {
     const [campaign, setCampaign] = useState({ name: '' })
     const { request: updateCampaignData, status: campaignStatus, data: campaignData } = useRequest()
 
-    async function formHandler(e) {
-        e.preventDefault()
+    const formHandler = useCallback((event) => async () => {
+        event.preventDefault()
         await updateCampaignData(updateCampaign(campaign))
         setCampaign(campaignData)
-    }
+    }, [campaign, campaignData])
 
     return useMemo(() => {
         return (
