@@ -1,10 +1,11 @@
+// CAMPAIGN HELPER // helper.js
 
-// CAMPAING API INTERFACE // interface.js
-
-
-function mapDataHelper(data) {
+export function mapDataHelper(data) {
     return { ...data, newAttr: Math.random() }
 }
+
+
+// CAMPAING API // interface.js
 
 export function updateCampaign(campaign) {
     return {
