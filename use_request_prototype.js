@@ -48,7 +48,6 @@ export function useRequest() {
     const { openAuthModal, userToken } = useAdmin()
     const cancelToken = useRef()
     const lastRequestConfig = useRef()
-    const retriesLimit = useRef(0)
 
     const cancelRequest = useCallback((message = 'operation canceled by the user') => {
         if (cancelToken.current) {
@@ -74,7 +73,6 @@ export function useRequest() {
             })
             setData(response.data)
             setStatus('finished')
-            retriesLimit.current = 0
         } catch (error) {
             console.error(error)
             if (axiosInstance.isCancel(error)) {
@@ -100,8 +98,7 @@ export function useRequest() {
         const errorStatus = error.response.status
         const requestMethod = lastRequestConfig.current.config.method
 
-        if (userToken && errorStatus === 401 && requestMethod.toUpperCase() === "GET" && retriesLimit.current === 0) {
-            retriesLimit.current += 1
+        if (userToken && errorStatus === 401 && requestMethod.toUpperCase() === "GET") {
             request(lastRequestConfig.current)
         }
     }, [userToken])
