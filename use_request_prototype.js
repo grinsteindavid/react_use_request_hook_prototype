@@ -1,8 +1,5 @@
 // CAMPAIGN HELPER // helper.js
 
-import { useCallback } from "react";
-import { async } from "q";
-
 export function mapDataHelper(data) {
     return { ...data, newAttr: Math.random() }
 }
@@ -49,13 +46,13 @@ export function useRequest() {
     const cancelToken = useRef()
     const lastRequestConfig = useRef()
 
-    const cancelRequest = useCallback((message = 'operation canceled by the user') => {
+    function cancelRequest(message = 'operation canceled by the user') {
         if (cancelToken.current) {
             cancelToken.current.cancel(message)
         }
-    }, [])
+    }
 
-    const request = useCallback(async ({ config, interceptors }) => {
+    async function request({ config, interceptors }) {
         lastRequestConfig.current = { config, interceptors }
         cancelToken.current = Axios.CancelToken.source()
         const axiosInstance = Axios.create({ cancelToken })
@@ -86,11 +83,11 @@ export function useRequest() {
             }
             setError(error)
         }
-    }, [])
+    }
 
     useEffect(() => {
         return () => {
-            cancelRequest('component dismount')
+            cancelRequest('request canceled by dismount')
         }
     }, [])
 
@@ -108,25 +105,24 @@ export function useRequest() {
 
 // REACT COMPONENT // component.jsx
 
+import { updateCampaign } from './interface'
 export function CampaignForm(props) {
     const [campaign, setCampaign] = useState({ name: '' })
     const { request: updateCampaignData, status: campaignStatus, data: campaignData } = useRequest()
 
-    const formHandler = useCallback((event) => async () => {
+    async function formHandler(event) {
         event.preventDefault()
         await updateCampaignData(updateCampaign(campaign))
         setCampaign(campaignData)
-    }, [campaign, campaignData])
+    }
 
-    return useMemo(() => {
-        return (
-            <form onSubmit={formHandler} loading={campaignStatus === 'loading'}>
-                <input value={campaign.name} onChange={e => setCampaign(prevState => ({ ...prevState, name: e.target.value }))} />
+    return (
+        <form onSubmit={formHandler} loading={campaignStatus === 'loading'}>
+            <input value={campaign.name} onChange={e => setCampaign(prevState => ({ ...prevState, name: e.target.value }))} />
 
-                <button type="submit" />
-            </form>
-        )
-    }, [campaign, campaignStatus])
+            <button type="submit" />
+        </form>
+    )
 }
 
 
