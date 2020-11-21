@@ -85,6 +85,15 @@ export function useRequest() {
         }
     }
 
+    function retryRequest() {
+        const errorStatus = error.response.status
+        const requestMethod = lastRequestConfig.current.config.method
+
+        if (userToken && errorStatus === 401 && requestMethod.toUpperCase() === "GET") {
+            request(lastRequestConfig.current)
+        }
+    }
+
     useEffect(() => {
         return () => {
             cancelRequest('request canceled by dismount')
@@ -92,12 +101,7 @@ export function useRequest() {
     }, [])
 
     useEffect(() => {
-        const errorStatus = error.response.status
-        const requestMethod = lastRequestConfig.current.config.method
-
-        if (userToken && errorStatus === 401 && requestMethod.toUpperCase() === "GET") {
-            request(lastRequestConfig.current)
-        }
+        retryRequest()
     }, [userToken])
 
     return { request, status, data, error, cancelRequest }
